@@ -1,0 +1,17 @@
+[
+    {
+        "deviceModelId": "wireless_stick",
+        "deviceInfo": [
+            {
+                "id": "Hyperion-12",
+                "name": "eui-90b3d57ed004af73",
+                "position": {
+                    "x": "-130",
+                    "y": " -9",
+                    "z": " 2.5"
+                },
+                "lastActivityTime": "2020-10-15T02:43:10.4780964Z"
+            }
+        ]
+    }
+]

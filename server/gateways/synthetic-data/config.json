@@ -928,11 +928,11 @@
     "Range": {
         "Temperature": {
             "min": 17,
-            "max": 28
+            "max": 23
         },
         "Humidity": {
-            "min": 5,
-            "max": 70
+            "min": 50,
+            "max": 80
         },
         "CO₂": {
             "min": 400,

@@ -21,9 +21,10 @@ ApplicationContext.setup(SiteConfig);
 
 
 
-require("./router/DataAPI")(router);
+require("./router/DataAPI")(router); //add DataAPI to router
 require("./CustomRouter.js")(router); // Override or Add your custom API routes to this file
 require("./router/Index.js")(router);
+// console.log(router);
 
 module.exports = {
     app,

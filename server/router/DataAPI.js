@@ -9,8 +9,8 @@ module.exports = function (router) {
         let deviceModelFile, deviceFile;
 
         const syntheticDataRoot = `${__dirname}/../gateways/synthetic-data`;
-        const syntheticModels = `${syntheticDataRoot}/device-models.json`;
-        const syntheticDevices = `${syntheticDataRoot}/devices.json`;
+        const syntheticModels = `${syntheticDataRoot}/shing-models.json`;
+        const syntheticDevices = `${syntheticDataRoot}/shing-devices.json`;
         const syntheticConfig = `${syntheticDataRoot}/config.json`;
 
         if (!provider || !project) {
@@ -22,6 +22,7 @@ module.exports = function (router) {
                 case "azure":
                     deviceModelFile = process.env.DEVICE_MODEL_JSON || syntheticModels;
                     req.dataGateway = new AzureGateway(deviceModelFile);
+                    deviceFile = process.env.DEVICE_JSON || syntheticDevices;
                     break;
                 case "csv": {
                     deviceModelFile = process.env.CSV_MODEL_JSON || syntheticModels;
@@ -77,6 +78,7 @@ module.exports = function (router) {
     router.get("/api/device-models", gatewayFactory, setCORS, function (req, res) {
         /** @type {DataGateway} */
         const dataGateway = req.dataGateway;
+        console.log("DataAPI getting device-models");
         dataGateway
             .getDeviceModels()
             .then((deviceModels) => {
@@ -93,6 +95,7 @@ module.exports = function (router) {
         const dataGateway = req.dataGateway;
         // This is an optional query parameter for providers that support it.
         const deviceModelId = req.query ? req.query.model : undefined;
+        console.log("DataAPI getting device");
 
         dataGateway
             .getDevicesInModel(deviceModelId)
@@ -118,7 +121,12 @@ module.exports = function (router) {
         const startTime = req.query.startTime;
         const endTime = req.query.endTime;
         const resolution = req.query.resolution;
-
+        console.log("\nDataAPI getting aggregates");
+        console.log("device: ", device);
+        console.log("property: ", property);
+        console.log("startTime: ", startTime);
+        console.log("endTime: ", endTime);
+        console.log("resolution: ", resolution);
         if (!device || !property || !startTime || !endTime || !resolution) {
             res.status(400).send(
                 "Missing query parameters: device, property, startTime, endTime, resolution"

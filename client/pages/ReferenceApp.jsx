@@ -42,6 +42,7 @@ THREE.EventDispatcher.prototype.apply(EventBus.prototype);
  * @memberof Autodesk.DataVisualization.Examples
  */
 function ReferenceApp(props) {
+    console.log("HIIIIII I am reference app");
     const queryParams = new URLSearchParams(useLocation().search);
     const geomIndex = queryParams.get("geometryIndex")
         ? parseInt(queryParams.get("geometryIndex"))
@@ -61,7 +62,6 @@ function ReferenceApp(props) {
         showTextures: true,
         heatmapType: "GeometryHeatmap",
     };
-
     useEffect(() => {
         eventBusRef.current.addEventListener(EventTypes.MODEL_LOAD_COMPLETED, async function (
             event

@@ -4,75 +4,84 @@ const { EventHubConsumerClient, latestEventPosition } = require("@azure/event-hu
 const SocketIOServer = require("socket.io");
 const _ = require("lodash");
 
-function createSocketIOServer(server) {
+async function createSocketIOServer(server) {
     const socketIO = SocketIOServer(server, {
         path: "/api/socket",
     });
+    console.log("Creating socket RealTimeApi.js");
 
-    const dtClient = new DigitalTwinsClient(
-        process.env.AZURE_DIGITAL_TWIN_URL,
-        new ClientSecretCredential(
-            process.env.AZURE_TENANT_ID,
-            process.env.AZURE_CLIENT_ID,
-            process.env.AZURE_APPLICATION_SECRET
-        )
-    );
 
-    let twinData = [];
-    async function getDigitalTwins() {
-        const dtQueryItr = dtClient.queryTwins(
-            "SELECT * FROM digitaltwins DT WHERE IS_OF_MODEL(DT, 'dtmi:com:Sensor;1')"
-        );
-        let newTwinData = [];
-        for await (let page of dtQueryItr.byPage()) {
-            if (page.items) {
-                // TODO: Do we need timeStamp?
-                /**
-                 * All properties will have metadata with the last update time
-                 * any property that starts with $ is internal to digital twins and not user defined
-                 * Azure digital twin format
-                 * {
-                 *   $dtId: Hyperion
-                 *   $etag: ...
-                 *   $ metadata: {
-                 *     $model: ..
-                 *     name: {
-                 *       lastUpdateTime: ...
-                 *     }
-                 *   }
-                 *   name: ...
-                 *   ....
-                 * }
-                 */
-                for (const twinQuery of page.items) {
-                    let twin = {};
-                    for (const [key, value] of Object.entries(twinQuery)) {
-                        if (!key.startsWith("$")) {
-                            if (key === "name") {
-                                twin["DeviceId"] = value;
-                            } else {
-                                twin[key] = value;
-                            }
-                        }
-                    }
-                    newTwinData.push(twin);
-                }
-            }
-        }
-        twinData = newTwinData;
-        // Real time update option 1
-        // Real-time update via digital twin data
-        //socket.emit("iot-data", JSON.stringify(twinData));
-    }
+//--------------------------------------------------------------------------------------------------------------
+if(true){
+    // const dtClient = new DigitalTwinsClient(
+    //     process.env.AZURE_DIGITAL_TWIN_URL,
+    //     new ClientSecretCredential(
+    //         process.env.AZURE_TENANT_ID,
+    //         process.env.AZURE_CLIENT_ID,
+    //         process.env.AZURE_APPLICATION_SECRET
+    //     )
+    // );
 
-    // Update and cache twin data
-    getDigitalTwins();
-    setInterval(getDigitalTwins, 60 * 1000);
+    // let twinData = [];
+    // async function getDigitalTwins() {
+    //     const dtQueryItr = dtClient.queryTwins(
+    //         "SELECT * FROM digitaltwins DT WHERE IS_OF_MODEL(DT, 'dtmi:com:Sensor;1')"
+    //     );
+    //     let newTwinData = [];
+    //     for await (let page of dtQueryItr.byPage()) {
+    //         if (page.items) {
+    //             // TODO: Do we need timeStamp?
+    //             /**
+    //              * All properties will have metadata with the last update time
+    //              * any property that starts with $ is internal to digital twins and not user defined
+    //              * Azure digital twin format
+    //              * {
+    //              *   $dtId: Hyperion
+    //              *   $etag: ...
+    //              *   $ metadata: {
+    //              *     $model: ..
+    //              *     name: {
+    //              *       lastUpdateTime: ...
+    //              *     }
+    //              *   }
+    //              *   name: ...
+    //              *   ....
+    //              * }
+    //              */
+    //             for (const twinQuery of page.items) {
+    //                 let twin = {};
+    //                 for (const [key, value] of Object.entries(twinQuery)) {
+    //                     if (!key.startsWith("$")) {
+    //                         if (key === "name") {
+    //                             twin["DeviceId"] = value;
+    //                         } else {
+    //                             twin[key] = value;
+    //                         }
+    //                     }
+    //                 }
+    //                 newTwinData.push(twin);
+    //             }
+    //         }
+    //     }
+    //     twinData = newTwinData;
+    //     // Real time update option 1
+    //     // Real-time update via digital twin data
+    //     //socket.emit("iot-data", JSON.stringify(twinData));
+    // }
 
-    socketIO.on("connection", (socket) => {
-        //Send initial IoT-Data collected from Digital Twin
-        socket.emit("iot-data", JSON.stringify(twinData));
-    });
+    // // Update and cache twin data
+    // getDigitalTwins();
+    // setInterval(getDigitalTwins, 60 * 1000);
+
+    // socketIO.on("connection", (socket) => {
+    //     //Send initial IoT-Data collected from Digital Twin
+    //     socket.emit("iot-data", JSON.stringify(twinData));
+    // });
+
+
+//--------------------------------------------------------------------------------------------------------------
+
+
 
     // Real time-update option 3
     // Synthetic data push
@@ -115,13 +124,23 @@ function createSocketIOServer(server) {
     // }
     // sendSyntheticData();
     // setInterval(sendSyntheticData, 5 * 60 * 1000);
+}
+//--------------------------------------------------------------------------------------------------------------
+
 
     // Real Time update option 2
     // Real-time update by subscribing to iot-hub events
+
+    const { convertIotHubToEventHubsConnectionString } = require('./iot-hub-connection-string.js');
+    //const AZURE_IOT_HUB_CONNECTION_STRING="HostName=Kin-IoT-hub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=GuGPJvGhCfWRhpISRLY9aLi1gQ6N2eQ7M6zKo3yCmI0="
+    const AZURE_IOT_HUB_EVENT_HUB_CONNECTION_STRING = await convertIotHubToEventHubsConnectionString(AZURE_IOT_HUB_CONNECTION_STRING);
+    console.log("RealTimeApi.js : AZURE_IOT_HUB_EVENT_HUB_CONNECTION_STRING = ",AZURE_IOT_HUB_EVENT_HUB_CONNECTION_STRING);
+
     const client = new EventHubConsumerClient(
         "websocket",
-        process.env.AZURE_IOT_HUB_EVENT_HUB_CONNECTION_STRING
+        AZURE_IOT_HUB_EVENT_HUB_CONNECTION_STRING
     );
+
     const subscriptionOptions = {
         startPosition: latestEventPosition,
     };
@@ -143,8 +162,26 @@ function createSocketIOServer(server) {
                 let eventsData = [];
                 for (let e of events) {
                     let eventData = _.cloneDeep(e["body"]);
+
+                    /***********************************/
+                    // console.log(e);
+                    // const messageDatao = JSON.stringify(eventData);
+                    // const messageData = JSON.parse(messageDatao);
+                    // console.log("eventData:", eventData);
+                    // console.log(messageData.uplink_message.decoded_payload);
+                    // console.log("device_id: ",messageData.end_device_ids.device_id);
+                    console.log("Received Time: ", e["enqueuedTimeUtc"]);
+                    /***********************************/
+
                     eventData["DeviceId"] = e["systemProperties"]["iothub-connection-device-id"];
+                    eventData["timeStamp"] = e["enqueuedTimeUtc"];
+                    eventData["temperature"] = e["body"]["uplink_message"]["decoded_payload"]["temperature"];
+                    eventData["humidity"] = e["body"]["uplink_message"]["decoded_payload"]["humidity"];         
+                    console.log("Temperature:", eventData["temperature"]);
+                    console.log("Humidity:", eventData["humidity"]);
                     eventsData.push(eventData);
+                    
+
                 }
                 socketIO.emit("iot-data", JSON.stringify(eventsData));
             },
@@ -154,6 +191,11 @@ function createSocketIOServer(server) {
         },
         subscriptionOptions
     );
+    console.log("Creating socket successful\n");
+
+    
+//--------------------------------------------------------------------------------------------------------------
+
 
     return socketIO;
 }
